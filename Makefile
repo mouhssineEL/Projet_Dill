@@ -4,12 +4,6 @@ dpl ?= .deploy.env
 include $(dpl)
 export $(shell sed 's/=.*//' $(dpl))
 
-# import config.
-# You can change the default config with `make cnf="config_special.env" build`
-cnf ?= .config.env
-include $(cnf)
-export $(shell sed 's/=.*//' $(cnf))
-
 
 # HELP
 # This will output the help for each task
@@ -21,42 +15,34 @@ help: ## This help.
 
 .DEFAULT_GOAL := help
 
-
-
 # DOCKER TASKS
 
 # Build the container
-generate_docker_compose: ## To generate docker compose for gofish container
-	    $(shell ./.generate_docker_compose.sh)
-
-build: generate_docker_compose ## Build the release and development container. The development
-	docker-compose build --no-cache $(APP_NAME)
-	docker-compose run $(APP_NAME) grunt build
-	docker build -t $(APP_NAME) .
-
-
-run: stop ## Run container on port configured in `config.env`
-	docker run -i -t --rm --env-file=./.config.env -p=$(PORT):$(PORT) --name="$(APP_NAME)" $(APP_NAME)
-
-
-dev: ## Run container in development mode
-	docker-compose build --no-cache $(APP_NAME) && docker-compose run $(APP_NAME)
+generate_docker_compose: ## To generate docker-compose for gofish container
+	    @sudo sh .generate_docker_compose.sh
 
 # Build and run the container
-up: ## Spin up the project
-	docker-compose up --build $(APP_NAME)
+up: generate_docker_compose ## Spin up the project
+	docker-compose up -d
 
-stop: ## Stop container
-	docker stop $(APP_NAME)
+login_info: ## Show default crediantials
+	docker logs projet_dill-gophish | grep level #find the container name on docker-compose file
 
-start: ## start  container
-	docker start $(APP_NAME)
+start: ## start the container
+	docker start projet_dill-gophish
 
-rm: stop ## Stop and remove running containers
-	docker rm $(APP_NAME)
+stop: ## Stop the container
+	docker stop projet_dill-gophish
 
-get_logs: ## Get logs about the running container
-	docker logs -f $(APP_NAME)
+rm:  stop ## Remove the container
+	rm docker-compose.yml -fr
+	docker rm projet_dill-gophish 
+
+image_clean: clean ## Remove container image
+	docker image rm projet_dill-gophish
 
 clean: ## Clean the generated/compiles files
-	echo "nothing clean ..."
+	echo "Clearning docker footprint for network,system and images"
+	docker system prune -f
+	docker network prune -f
+	#docker images prune -f -a

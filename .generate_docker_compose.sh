@@ -1,10 +1,9 @@
-#docker run gophish/gophish:latest
 
-#---
 echo "version: \"3.7\"
 
 services:
   gophish:
+    container_name: projet_dill-gophish
     image: gophish/gophish:latest
     ports:
       - target: 3333
