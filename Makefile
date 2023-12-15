@@ -4,6 +4,8 @@ dpl ?= .deploy.env
 include $(dpl)
 export $(shell sed 's/=.*//' $(dpl))
 
+CONTAINER_NAME = projet_dill-gophish
+LOGIN_INFO_FILE = .default_credentials
 
 # HELP
 # This will output the help for each task
@@ -25,24 +27,33 @@ generate_docker_compose: ## To generate docker-compose for gofish container
 up: generate_docker_compose ## Spin up the project
 	docker-compose up -d
 
-login_info: ## Show default crediantials
-	docker logs projet_dill-gophish | grep level #find the container name on docker-compose file
+login_info: ## Show default credentials
+	@if [ -f $(LOGIN_INFO_FILE) ]; then \
+		cat $(LOGIN_INFO_FILE); \
+	else \
+		docker inspect --format='{{.State.Running}}' $(CONTAINER_NAME) 2>/dev/null | grep -q 'true' && \
+		docker logs $(CONTAINER_NAME) | grep level > $(LOGIN_INFO_FILE) || true; \
+	fi 
+default_credentials: login_info
+	cat $(LOGIN_INFO_FILE);
 
 start: ## start the container
-	docker start projet_dill-gophish
+	docker start $(CONTAINER_NAME) 
 
 stop: ## Stop the container
-	docker stop projet_dill-gophish
+	docker stop $(CONTAINER_NAME)
 
 rm:  stop ## Remove the container
 	rm docker-compose.yml -fr
-	docker rm projet_dill-gophish 
+	docker rm $(CONTAINER_NAME)
+	rm -f $(LOGIN_INFO_FILE)
 
 image_clean: clean ## Remove container image
-	docker image rm projet_dill-gophish
+	docker image rm $(CONTAINER_NAME)
 
-clean: ## Clean the generated/compiles files
+clean: rm ## Clean the generated/compiles files
 	echo "Clearning docker footprint for network,system and images"
 	docker system prune -f
 	docker network prune -f
 	#docker images prune -f -a
+	rm -f $(LOGIN_INFO_FILE)
