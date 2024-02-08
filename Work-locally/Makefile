@@ -28,12 +28,13 @@ up: generate_docker_compose ## Spin up the project
 	docker-compose up -d
 
 login_info: ## Show default credentials
-	@if [ -f $(LOGIN_INFO_FILE) ]; then \
-		cat $(LOGIN_INFO_FILE); \
-	else \
-		docker inspect --format='{{.State.Running}}' $(CONTAINER_NAME) 2>/dev/null | grep -q 'true' && \
-		docker logs $(CONTAINER_NAME) | grep level > $(LOGIN_INFO_FILE) || true; \
-	fi 
+	#@if [ -f $(LOGIN_INFO_FILE) ]; then \
+	#	cat $(LOGIN_INFO_FILE); \
+	#else \
+	#	docker inspect --format='{{.State.Running}}' $(CONTAINER_NAME) 2>/dev/null | grep -q 'true' && \
+	#	docker logs $(CONTAINER_NAME) | grep level > $(LOGIN_INFO_FILE) || true; \
+	#fi
+	docker logs $(CONTAINER_NAME) | grep level
 default_credentials: login_info
 	cat $(LOGIN_INFO_FILE);
 
